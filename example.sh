@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --partition=common
-#SBATCH --account=statdept
+#SBATCH --account=sta723-s20
 #SBATCH -c1
 
 hostname
