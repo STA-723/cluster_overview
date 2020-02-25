@@ -1,0 +1,272 @@
+---
+title: "Cluster Computing and DCC Basics"
+author: "Federico Ferrari and Fan Bu"
+date: "2/25/2020"
+output: 
+  ioslides_presentation:
+    smaller: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Useful resources
+
+The DCC User Guide (good to skim through):
+
+<https://rc.duke.edu/dcc/dcc-user-guide/>
+
+Colin Rundel's slides for Sta 790 (Spring 19, slightly out-dated):
+
+<http://www2.stat.duke.edu/~cr173/Sta790_Sp19/slides/Lec05.html#1>
+
+## DCC (Duke Computing Cluster) basic info
+
+- Formerly known as the “DSCR” (Duke Shared Cluster Resource)
+- 628 compute nodes with 15667 CPU cores (as of April 2019)
+- Most nodes are purchased by labs and depts
+- Some are provided by the University
+- 1000 TB of primary storage (Isilon X-series)
+- Red Hat Enterprise Linux 7
+- Uses the Slurm job queueing system
+
+
+## Getting started (Login)
+
+Log in by (make sure you have access to DCC first!)
+
+```{bash, eval = FALSE}
+ssh netID@dcc-slogin.oit.duke.edu
+```
+
+You will be automatically assigned to one of the following login nodes:
+
+- `dcc-slogin-01`
+- `dcc-slogin-02`
+- `dcc-slogin-03`
+
+DCC can only be accessed from within the Duke Network. If you are off campus, use the VPN or MFA.
+
+The default home directory should be something like
+
+```{bash, eval = FALSE}
+/hpc/home/netID
+```
+
+
+## Directory
+
+You can create your own directory in `/work`
+
+```{bash, eval = FALSE}
+cd /work
+mkdir netID
+```
+
+
+
+```{bash, eval = FALSE}
+cd /netID
+ls -la
+```
+
+
+## DCC Partitions and Groups
+
+Usage access and privileges are associated with partitions on DCC:
+
+- `common`: default partition; jobs directed to core nodes (up to 64 GB RAM).
+- `common-large`: jobs directed to larger core nodes (64-240 GB GB RAM).
+- `gpu-common`: jobs directed to GPU nodes (which you probably won't need).
+- `<group_name>`: private, lab-owned nodes; only accessible by group members.
+
+As a user of the cluster, you are part of several partitions/groups:
+```{bash, eval = FALSE}
+groups
+```
+
+## The `statdept` Group
+
+All StatSci students are members of the `statdept` group; you have priority to run jobs on the following nodes:
+
+- `dcc-statdept-01` 
+- `dcc-herringlab-01` (lower priority)
+- `dcc-volfovskylab-01` (lower priority)
+
+If you want to check the specifics of these nodes, you can run
+```{bash, eval = FALSE}
+ssh dcc-statdept-01
+lscpu
+top
+```
+
+
+## File Transfer
+
+Push a single file to DCC using a command like
+
+```{bash, eval = FALSE}
+scp <path_to_local_file> netID@dcc-slogin.oit.duke.edu:~/
+```
+
+Reverse the order of two paths to pull files from DCC.
+
+Similarly, by adding the `-r` flag, you can push/pull a directory to/from DCC. For example, to push a directory `dir1/`
+
+```{bash, eval = FALSE}
+scp -r dir1/ netID@dcc-slogin.oit.duke.edu:~/
+```
+
+Other possibilities for file transfer include the app `RoyalTSX` (recommended for mac users)
+
+Similarly, you can clone a git repository:
+
+```{bash, eval = FALSE}
+git clone https://github.com/STA-723/cluster_overview.git
+cd cluster_overview/
+```
+
+## Available Softwares on DCC
+
+DCC offers some pre-installed softwares ("modules") that you can directly load and use. To check all available modules, run
+
+```{bash, eval = FALSE}
+module avail
+```
+
+To use a module, you have to load it; for example, 
+
+```{bash, eval = FALSE}
+module load R
+```
+
+which will load the latest version of R (3.6.0) on DCC. (And then you have to type "R" in the command line to actually run R.)
+
+After using a module, you have to unload it; for example, 
+
+```{bash, eval = FALSE}
+module unload R
+```
+
+
+## Slurm Basics
+
+First principle of DCC:
+
+### NEVER run jobs on the log-in nodes!
+
+Always request a session via Slurm commands. 
+
+Slurm is a cluster management and job scheduling system. Basically, you use Slurm to request nodes, submit computing jobs and monitor those jobs. 
+
+You can run interactive sessions or submit jobs through simple commands or a short script.
+
+Slurm introduction and official documentation: <https://slurm.schedmd.com/overview.html>
+
+## Slurm Commands
+
+- `srun`: Reserve a node and run a single command line job
+
+- `sbatch`: Submit a batch job
+
+- `squeue`: Show lists of running jobs (use the `-u` flag to specify user)
+
+- `scancel`: Delete one or more batch jobs (`scancel <JobID>`)
+
+- `sinfo`: Show info about machines
+
+- `scontrol`: Show cluster configuration information
+
+## Batch Scripts
+
+Look at the example batch script `example.sh`:
+```{bash, eval = FALSE}
+#!/bin/bash
+#SBATCH --partition=common,common-large,statdept-low
+#SBATCH --account=statdept
+#SBATCH -c1
+
+hostname 
+```
+
+From line 2 to 4, each line has 3 components:
+
+- `#SBATCH`: header that indicates a sbatch setting
+- `--XXX` OR `-X`: long or short command argument flag
+- `=xxx` OR `x`: the specified value for the argument
+
+## `sbatch` Arguments
+
+Short	     Long	                 Default	               Description
+-------    ----------------      ------------------      ---------------------------------------------
+ -p	       --partition		       common                  Which partition to use
+ -o	       --output	             *	                     Where to send stdout
+ -e	       --error	             *	                     Where to send stderr
+ -N		                           1	                     How many nodes (machines)
+ -n	       --ntasks	             1	                     How many parallel tasks (jobs)
+ -c	       --cpus-per-task	     1	                     CPUs per task
+           --mem	               2GB	                   Real memory required per node
+           --mem-per-cpu	       ? M	                   Minimum memory required per allocated CPU
+ -a	       --array	             *	                     Submit a job array (sbatch only)
+
+
+## Running Batch Scripts
+
+You can interact to the cluster using a batch script. We will run `example.sh` 
+
+```{bash, eval = FALSE}
+more example.sh
+sbatch example.sh
+```
+
+You can check the status of your jobs with:
+
+```{bash, eval = FALSE}
+squeue -u netID
+```
+
+Then your output will be saved as `slurm*.out` in the same directory in which you run the script. You can also specify another output name for your `.out` file.
+
+```{bash, eval = FALSE}
+ls 
+more slurm*
+```
+
+
+## Install R Packages
+
+You will most likely your own R scripts in the cluster, in order to install the packages you can either open R and run `install.packages("package")`, let's try with the following package:
+
+```{bash, eval = FALSE}
+install.packages("beepr")
+```
+
+you will have your packages installed in a directory of the cluster that you can link when running an Rscript
+
+## Run R Script 
+
+Now we will run the batch script `example_Rscript.sh`, but first of all let's modify it to link it to your library of packages
+
+```{bash, eval = FALSE}
+vim example_Rscript.sh
+```
+
+In particular modify the line `Export R_LIBS_USER = ~/R/x86_64-pc-linux-gnu-library/3.6`. With this script we can check that we correctly install the beepr package. 
+
+
+## Save your Results
+
+Never forget to save your results when running an Rscript otherwise they will be lost FOREVER. Once saved you can use git to add it to the repo and push it.
+
+```{bash, eval = FALSE}
+git add -A
+git commit -m "example of saving results"
+git push
+```
+
+And then you can pull them locally from your repo. 
+
+
+
+
