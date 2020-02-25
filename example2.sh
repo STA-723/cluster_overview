@@ -7,7 +7,7 @@
 #SBATCH --array=7-9
 #SBATCH --cpus-per-task 2 
 #SBATCH --mem=40G
-//#SBATCH --mem-per-cpu=4G
+#SBATCH --mem-per-cpu=4G
 
 singularity exec graphMatPlot.simg Rscript server_missrecov_more.R
  
