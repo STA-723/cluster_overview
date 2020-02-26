@@ -1,8 +1,9 @@
 #!/bin/bash
 #SBATCH -J example2
-#SBATCH --partition=statdept,herringlab-low,volfovskylab-low,common
+#SBATCH --partition=common
 #SBATCH --account=sta723-s20
 #SBATCH --output=results/%x.out
+#SBATCH --error=results/%x.err
 #SBATCH --array=1-5
 #SBATCH --cpus-per-task 2 
 #SBATCH --mem=4G
