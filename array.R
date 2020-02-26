@@ -10,8 +10,7 @@ mu = mean(x)
 print(mu)
 
 # directory for saving 
-dir_path = paste("/work/ff31/cluster_overview/results/",
-                 dir_name,sep="")
+dir_path = "/work/ff31/cluster_overview/results/"
 
 if(dir.exists(dir_path) == F){
   dir.create(dir_path)
