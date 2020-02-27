@@ -2,8 +2,8 @@
 #SBATCH -J example2
 #SBATCH --partition=common
 #SBATCH --account=sta723-s20
-#SBATCH --output=results/%x.out
-#SBATCH --error=results/%x.err
+#SBATCH --output=results/%x_%a.out
+#SBATCH --error=results/%x_%a.err
 #SBATCH --array=1-5
 #SBATCH --cpus-per-task 2 
 #SBATCH --mem=4G
